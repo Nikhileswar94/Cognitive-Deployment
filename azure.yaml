@@ -1,0 +1,16 @@
+
+name: cognitive-infra
+infra:
+  provider: bicep
+  path: infra
+hooks:
+  preprovision:
+    windows:
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        # Populate USER_NAME from signed-in az account (no user prompt)
+        try { $user = az account show --query "user.name" -o tsv } catch { $user = '' }
+        if (-not $user) { try { $user = az ad signed-in-user show --query "userPrincipalName" -o tsv } catch { $user = '' } }
+        if (-not $user) { $user = 'unknown' }
+        azd env set USER_NAME "$user" | Out-Null
